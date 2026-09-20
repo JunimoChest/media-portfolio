@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>HLS test</title>
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.13/dist/hls.min.js"></script>
+</head>
+<body style="margin:0;background:#000">
+  <video id="v" controls muted style="width:100%"></video>
+  <script>
+    const v = document.getElementById("v");
+    window.__result = { mode: "none", levels: 0, currentLevel: -1, events: [] };
+    v.addEventListener("playing", () => window.__result.events.push("playing@" + v.currentTime.toFixed(1)));
+    v.addEventListener("waiting", () => window.__result.events.push("waiting@" + v.currentTime.toFixed(1)));
+    v.addEventListener("canplay", () => window.__result.events.push("canplay@" + v.currentTime.toFixed(1)));
+    if (window.Hls && Hls.isSupported()) {
+      const hls = new Hls({ startLevel: -1 });
+      window.__hls = hls;
+      hls.loadSource("master.m3u8");
+      hls.attachMedia(v);
+      hls.on(Hls.Events.MANIFEST_PARSED, (event, data) => {
+        window.__result.mode = "hls";
+        window.__result.levels = data.levels.length;
+        v.play().catch(() => {});
+      });
+      hls.on(Hls.Events.LEVEL_SWITCHED, (event, data) => {
+        window.__result.currentLevel = data.level;
+      });
+    } else {
+      window.__result.mode = "unsupported";
+    }
+  </script>
+</body>
+</html>
