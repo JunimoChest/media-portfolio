@@ -100,7 +100,7 @@ const sections = [
             kind: "video",
             typeLabel: "创意视频",
             title: "AI视频",
-            summary: "个人小红书账号内容，使用即梦生成AI视频",
+            summary: "个人小红书账号内容，使用即梦生成AI视频。借用网络热点iPhone Duo宣传片，制作潮玩玩偶的创意视频。",
             cover: "assets/thumbs/creative-launch-cover.jpg",
             src: "assets/videos/creative-launch.mp4"
           }
