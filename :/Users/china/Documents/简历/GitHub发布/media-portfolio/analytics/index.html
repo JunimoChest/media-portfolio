@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>游戏广告素材数据看板</title>
+  <link rel="icon" href="../favicon.svg?v=20260920n" type="image/svg+xml">
+  <link rel="stylesheet" href="../styles.css?v=20260919e">
+  <link rel="stylesheet" href="styles.css?v=20260920a">
+  <script src="vendor/echarts.min.js" defer></script>
+  <script src="dashboard.js?v=20260920d" defer></script>
+</head>
+<body class="is-locked analytics-page">
+  <div class="password-gate" id="passwordGate" role="dialog" aria-modal="true" aria-labelledby="gateTitle">
+    <div class="gate-panel">
+      <p class="eyebrow">Creative BI Dashboard</p>
+      <h1 id="gateTitle">游戏广告素材数据看板</h1>
+      <p class="gate-copy">请输入访问密码</p>
+      <form class="gate-form" id="passwordForm" novalidate>
+        <label class="sr-only" for="passwordInput">访问密码</label>
+        <div class="gate-input-row">
+          <input id="passwordInput" type="password" autocomplete="current-password" inputmode="text" placeholder="访问密码" autofocus>
+          <button class="primary-button" type="submit" aria-label="进入看板">
+            <span class="gate-arrow">→</span>
+          </button>
+        </div>
+        <p class="gate-error" id="gateError" role="alert" aria-live="polite"></p>
+      </form>
+    </div>
+  </div>
+
+  <div class="analytics-shell" id="analyticsShell" aria-hidden="true" inert>
+    <header class="analytics-header">
+      <div class="analytics-brand">
+        <span class="analytics-brand-mark">BI</span>
+        <div>
+          <p class="eyebrow">Operations Analytics / 2026</p>
+          <h1>游戏广告素材数据看板</h1>
+        </div>
+      </div>
+      <div class="analytics-header-actions">
+        <span class="sample-badge">脱敏样例数据</span>
+        <a class="back-link" href="../index.html">返回作品集</a>
+      </div>
+    </header>
+
+    <main class="analytics-main">
+      <section class="filter-panel" aria-label="看板筛选">
+        <div class="filter-field">
+          <label for="startDate">开始日期</label>
+          <input id="startDate" type="date" min="2026-07-01" max="2026-08-31">
+        </div>
+        <div class="filter-field">
+          <label for="endDate">结束日期</label>
+          <input id="endDate" type="date" min="2026-07-01" max="2026-08-31">
+        </div>
+        <div class="filter-field filter-field--channels">
+          <span>投放渠道</span>
+          <div class="channel-filters" id="channelFilters"></div>
+        </div>
+        <div class="filter-field">
+          <label for="creativeSearch">素材筛选</label>
+          <input id="creativeSearch" type="search" placeholder="输入素材名称或创意ID">
+        </div>
+        <button class="reset-button" id="resetFilters" type="button">重置筛选</button>
+      </section>
+
+      <section class="dashboard-section">
+        <div class="section-caption">
+          <div>
+            <p class="eyebrow">Primary Metrics</p>
+            <h2>核心指标</h2>
+          </div>
+          <p id="dataScopeText">2026-07-01 至 2026-08-31</p>
+        </div>
+        <div class="primary-metrics" id="primaryMetrics"></div>
+        <div class="secondary-metrics" id="secondaryMetrics"></div>
+      </section>
+
+      <section class="dashboard-section">
+        <div class="section-caption">
+          <div>
+            <p class="eyebrow">Performance View</p>
+            <h2>投放表现</h2>
+          </div>
+        </div>
+        <div class="chart-grid">
+          <article class="chart-card chart-card--wide">
+            <header><h3>每日消耗</h3><span>按筛选条件汇总</span></header>
+            <div class="chart" id="trendChart"></div>
+          </article>
+          <article class="chart-card top-creatives-card">
+            <header>
+              <div>
+                <h3>高消耗素材 TOP 3</h3>
+                <span>按渠道切换</span>
+              </div>
+            </header>
+            <div class="channel-tabs" id="topChannelTabs"></div>
+            <div class="top-creatives-list" id="topCreativesList"></div>
+          </article>
+        </div>
+      </section>
+
+      <section class="dashboard-section">
+        <div class="section-caption">
+          <div>
+            <p class="eyebrow">Creative Detail</p>
+            <h2>素材明细</h2>
+          </div>
+          <p>点击任意一行查看素材、账户整体与平台参考值对比</p>
+        </div>
+        <div class="creative-table-wrap">
+          <table class="creative-table">
+            <thead>
+              <tr>
+                <th>素材</th>
+                <th>渠道</th>
+                <th>广告组</th>
+                <th><button type="button" data-sort="spend">消耗 <span></span></button></th>
+                <th><button type="button" data-sort="impressions">曝光量 <span></span></button></th>
+                <th><button type="button" data-sort="ctr">曝光点击率 <span></span></button></th>
+                <th><button type="button" data-sort="clickDownloadRate">点击下载率 <span></span></button></th>
+                <th><button type="button" data-sort="impressionDownloadRate">曝光下载率 <span></span></button></th>
+                <th><button type="button" data-sort="cpm">CPM <span></span></button></th>
+                <th><button type="button" data-sort="roi">ROI <span></span></button></th>
+              </tr>
+            </thead>
+            <tbody id="creativeTableBody"></tbody>
+          </table>
+        </div>
+        <div class="table-pagination">
+          <span id="pageStatus"></span>
+          <div class="pagination-controls">
+            <button id="prevPage" type="button">上一页</button>
+            <div id="pageNumbers"></div>
+            <button id="nextPage" type="button">下一页</button>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="detail-drawer" id="detailDrawer" aria-hidden="true">
+    <button class="detail-backdrop" type="button" data-close-detail aria-label="关闭素材详情"></button>
+    <aside class="detail-panel" role="dialog" aria-modal="true" aria-labelledby="detailTitle">
+      <header class="detail-header">
+        <div>
+          <p class="eyebrow" id="detailKicker"></p>
+          <h2 id="detailTitle"></h2>
+        </div>
+        <button class="detail-close" type="button" data-close-detail aria-label="关闭">×</button>
+      </header>
+      <div class="detail-body" id="detailBody"></div>
+    </aside>
+  </div>
+
+  <noscript>本站需要启用 JavaScript 才能浏览。</noscript>
+</body>
+</html>
