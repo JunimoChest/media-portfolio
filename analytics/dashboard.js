@@ -8,28 +8,28 @@ const CHANNELS = [
     name: "华为",
     color: "#174b78",
     volume: 1.18,
-    benchmark: { ctr: 0.034, clickDownloadRate: 0.108, impressionDownloadRate: 0.00367, cpm: 24, roi: 1.14 },
+    benchmark: { ctr: 0.034, clickDownloadRate: 0.108, impressionDownloadRate: 0.00367, cpm: 24, roi: 0.11 },
   },
   {
     id: "taptap",
     name: "TapTap",
     color: "#16604a",
     volume: 0.62,
-    benchmark: { ctr: 0.029, clickDownloadRate: 0.122, impressionDownloadRate: 0.00354, cpm: 20, roi: 1.26 },
+    benchmark: { ctr: 0.029, clickDownloadRate: 0.122, impressionDownloadRate: 0.00354, cpm: 20, roi: 0.12 },
   },
   {
     id: "ocean",
     name: "巨量（字节系）",
     color: "#c45a24",
     volume: 1.72,
-    benchmark: { ctr: 0.024, clickDownloadRate: 0.091, impressionDownloadRate: 0.00218, cpm: 34, roi: 0.97 },
+    benchmark: { ctr: 0.024, clickDownloadRate: 0.091, impressionDownloadRate: 0.00218, cpm: 34, roi: 0.09 },
   },
   {
     id: "gdt",
     name: "广点通（腾讯系）",
     color: "#8a650c",
     volume: 1.36,
-    benchmark: { ctr: 0.022, clickDownloadRate: 0.086, impressionDownloadRate: 0.00189, cpm: 31, roi: 0.92 },
+    benchmark: { ctr: 0.022, clickDownloadRate: 0.086, impressionDownloadRate: 0.00189, cpm: 31, roi: 0.08 },
   },
 ];
 
@@ -50,6 +50,8 @@ const CREATIVES = [
 
 const SAMPLE_START = "2026-07-01";
 const SAMPLE_END = "2026-08-31";
+const MIN_ROI = 0.05;
+const MAX_ROI = 0.20;
 
 const state = {
   rows: [],
@@ -152,7 +154,7 @@ function generateSampleRows() {
         const downloads = Math.max(1, Math.round(clicks * clickDownloadRate));
         const cpm = clamp(channel.benchmark.cpm * creative.cpm * (0.91 + random() * 0.18), 10, 65);
         const spend = impressions / 1000 * cpm;
-        const roi = clamp(channel.benchmark.roi * creative.roi * (0.82 + random() * 0.34), 0.35, 2.3);
+        const roi = clamp(channel.benchmark.roi * creative.roi * (0.82 + random() * 0.34), MIN_ROI, MAX_ROI);
         rows.push({
           date,
           channelId: channel.id,
@@ -165,7 +167,8 @@ function generateSampleRows() {
           impressions,
           clicks,
           downloads,
-          revenue: spend * roi,
+          roi,
+          revenue: spend * (1 + roi),
         });
       });
     });
@@ -180,8 +183,9 @@ function aggregate(rows) {
     acc.clicks += row.clicks;
     acc.downloads += row.downloads;
     acc.revenue += row.revenue;
+    acc.roiWeighted += row.roi * row.spend;
     return acc;
-  }, { spend: 0, impressions: 0, clicks: 0, downloads: 0, revenue: 0 });
+  }, { spend: 0, impressions: 0, clicks: 0, downloads: 0, revenue: 0, roiWeighted: 0 });
 
   return {
     ...totals,
@@ -189,7 +193,7 @@ function aggregate(rows) {
     clickDownloadRate: totals.clicks ? totals.downloads / totals.clicks : 0,
     impressionDownloadRate: totals.impressions ? totals.downloads / totals.impressions : 0,
     cpm: totals.impressions ? totals.spend / totals.impressions * 1000 : 0,
-    roi: totals.spend ? totals.revenue / totals.spend : 0,
+    roi: totals.spend ? totals.roiWeighted / totals.spend : 0,
     cpc: totals.clicks ? totals.spend / totals.clicks : 0,
     costPerDownload: totals.downloads ? totals.spend / totals.downloads : 0,
   };
@@ -214,12 +218,16 @@ function formatPercent(value) {
   return `${formatDecimal(value * 100, 2)}%`;
 }
 
+function formatRoiValue(value) {
+  return `${formatDecimal(value * 100, 2)}%`;
+}
+
 function formatMetric(metric, value) {
   if (["spend", "cpc", "costPerDownload"].includes(metric)) return formatCurrency(value);
   if (["impressions", "clicks", "downloads"].includes(metric)) return formatInteger(value);
   if (metric === "ctr" || metric === "clickDownloadRate" || metric === "impressionDownloadRate") return formatPercent(value);
   if (metric === "cpm") return formatCurrency(value);
-  if (metric === "roi") return `${formatDecimal(value, 2)}x`;
+  if (metric === "roi") return formatRoiValue(value);
   return formatDecimal(value, 2);
 }
 
@@ -278,7 +286,7 @@ function renderMetrics() {
     metricCard("点击下载率", formatPercent(totals.clickDownloadRate), "下载量 ÷ 点击量", "#8a650c"),
     metricCard("曝光下载率", formatPercent(totals.impressionDownloadRate), "下载量 ÷ 曝光量", "#39706a"),
     metricCard("CPM", formatCurrency(totals.cpm), "每千次曝光成本", "#6c4f91"),
-    metricCard("ROI", `${formatDecimal(totals.roi, 2)}x`, "收入 ÷ 消耗", "#a43b3b"),
+    metricCard("ROI", formatRoiValue(totals.roi), "收入 ÷ 消耗", "#a43b3b"),
   ].join("");
 
   secondaryMetrics.innerHTML = [
@@ -481,12 +489,12 @@ function renderRoiRankChart() {
       axisPointer: { type: "shadow" },
       formatter: (params) => {
         const item = params[0];
-        return `${item.name}<br>ROI：${item.value.toFixed(2)}x`;
+        return `${item.name}<br>ROI：${item.value.toFixed(2)}%`;
       },
     },
     xAxis: {
       type: "value",
-      axisLabel: { formatter: (value) => `${value.toFixed(1)}x` },
+      axisLabel: { formatter: (value) => `${value.toFixed(2)}%` },
       splitLine: { lineStyle: { color: "#e8ecea" } },
     },
     yAxis: {
@@ -503,7 +511,7 @@ function renderRoiRankChart() {
         color: (params) => CHANNELS[params.dataIndex % CHANNELS.length].color,
         borderRadius: [0, 3, 3, 0],
       },
-      label: { show: true, position: "right", formatter: (params) => `${params.value.toFixed(2)}x` },
+      label: { show: true, position: "right", formatter: (params) => `${params.value.toFixed(2)}%` },
     }],
   });
 }
@@ -557,7 +565,7 @@ function renderTable() {
         <td>${formatPercent(totals.clickDownloadRate)}</td>
         <td>${formatPercent(totals.impressionDownloadRate)}</td>
         <td>${formatCurrency(totals.cpm)}</td>
-        <td>${formatDecimal(totals.roi, 2)}x</td>
+        <td>${formatRoiValue(totals.roi)}</td>
       </tr>`;
   }).join("");
   pageStatus.textContent = `第 ${startIndex + 1}-${Math.min(startIndex + state.pageSize, groups.length)} 条，共 ${groups.length} 条`;
@@ -623,7 +631,7 @@ function renderDetailChart(rows) {
     },
     yAxis: [
       { type: "value", name: "下载量", splitLine: { lineStyle: { color: "#e8ecea" } } },
-      { type: "value", name: "ROI", axisLabel: { formatter: (value) => `${value.toFixed(1)}x` }, splitLine: { show: false } },
+      { type: "value", name: "ROI", axisLabel: { formatter: (value) => `${value.toFixed(2)}%` }, splitLine: { show: false } },
     ],
     series: [
       { name: "下载量", type: "bar", data: daily.map((item) => item.totals.downloads), barMaxWidth: 16 },
@@ -657,7 +665,7 @@ function openDetail(key) {
       <div class="detail-kpi"><span>消耗</span><strong>${formatCurrency(selectedTotals.spend)}</strong></div>
       <div class="detail-kpi"><span>曝光量</span><strong>${formatInteger(selectedTotals.impressions)}</strong></div>
       <div class="detail-kpi"><span>下载量</span><strong>${formatInteger(selectedTotals.downloads)}</strong></div>
-      <div class="detail-kpi"><span>ROI</span><strong>${formatDecimal(selectedTotals.roi, 2)}x</strong></div>
+      <div class="detail-kpi"><span>ROI</span><strong>${formatRoiValue(selectedTotals.roi)}</strong></div>
     </div>
     <h3 class="comparison-title">素材 / 账户整体 / 平台参考值</h3>
     <div class="comparison-table-wrap">
