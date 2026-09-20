@@ -1,6 +1,7 @@
 """Local static server with HTTP Range support so video seeking works."""
 
 import argparse
+import mimetypes
 import os
 import re
 import sys
@@ -9,6 +10,9 @@ from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 
 RANGE_RE = re.compile(r"bytes=(\d*)-(\d*)$")
+
+mimetypes.add_type("application/vnd.apple.mpegurl", ".m3u8")
+mimetypes.add_type("video/mp2t", ".ts")
 
 
 class RangeRequestHandler(SimpleHTTPRequestHandler):
