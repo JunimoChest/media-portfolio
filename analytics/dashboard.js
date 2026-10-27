@@ -779,7 +779,7 @@ form.addEventListener("submit", async (event) => {
   const allowed = await isValidPassword(passwordInput.value);
   if (!allowed) {
     passwordInput.select();
-    window.alert("你没有被邀请\nYou are not invited");
+    window.alert("密码错误！\n\n你没有被邀请\nYou are not invited");
     return;
   }
   passwordInput.value = "";
