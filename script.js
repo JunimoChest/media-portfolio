@@ -1,6 +1,6 @@
-const PASSWORD_HASH = "c1c89f0f71b1caf9706060ea339b7ec12d618f2db4306927d8123d71a14ba2dc";
-const FALLBACK_BASE64 = "cWR5";
-const SESSION_KEY = "integrated-media-portfolio-unlocked";
+const PASSWORD_HASH = "3a225d604989b5b825d9bd4a9fe3de6382d6f6cabc3cfe265f632989c237d0a7";
+const FALLBACK_BASE64 = "cWR5MTAwNQ==";
+const SESSION_KEY = "integrated-media-portfolio-unlocked-v2";
 
 const sections = [
   {
@@ -92,15 +92,14 @@ const sections = [
             title: "猫meme游戏广告",
             summary: "游戏公司工作期间作品，使用剪映制作。借用猫meme的网络热梗包装产品，实现高消耗、高转化的传播效果。",
             cover: "assets/thumbs/cat-meme-ad-opening.jpg",
-            src: "assets/videos/cat-meme-ad.mp4",
-            hls: "assets/hls/cat-meme/master.m3u8"
+            src: "assets/videos/cat-meme-ad.mp4"
           },
           {
             id: "creative-video-launch",
             kind: "video",
             typeLabel: "创意视频",
             title: "AI视频",
-            summary: "个人小红书账号内容，使用即梦生成AI视频。借用网络热点iPhone Duo宣传片，制作潮玩玩偶的创意视频。",
+            summary: "个人小红书账号内容，使用即梦生成AI视频",
             cover: "assets/thumbs/creative-launch-cover.jpg",
             src: "assets/videos/creative-launch.mp4"
           }
@@ -157,8 +156,7 @@ const sections = [
 const state = {
   currentItem: null,
   lastFocused: null,
-  rendered: false,
-  hls: null
+  rendered: false
 };
 
 const gate = document.getElementById("passwordGate");
@@ -359,22 +357,6 @@ function openLocalItem(id) {
     viewerBody.classList.add("is-video");
     viewerBody.innerHTML = `
       <video src="${escapeHtml(item.src)}" controls playsinline preload="metadata" controlsList="nodownload noremoteplayback" disablePictureInPicture></video>`;
-    const video = viewerBody.querySelector("video");
-    if (item.hls && window.Hls && window.Hls.isSupported()) {
-      video.removeAttribute("src");
-      video.preload = "auto";
-      const hls = new window.Hls({ startLevel: -1 });
-      state.hls = hls;
-      hls.loadSource(item.hls);
-      hls.attachMedia(video);
-      hls.on(window.Hls.Events.ERROR, (event, data) => {
-        if (data && data.fatal) {
-          hls.destroy();
-          if (state.hls === hls) state.hls = null;
-          video.src = item.src;
-        }
-      });
-    }
   } else if (item.kind === "image") {
     viewerBody.innerHTML = `
       <div class="image-view">
@@ -416,10 +398,6 @@ function fitViewerVideo() {
 
 function closeViewer() {
   if (!viewer.classList.contains("is-open")) return;
-  if (state.hls) {
-    state.hls.destroy();
-    state.hls = null;
-  }
   viewer.classList.remove("is-open");
   viewer.setAttribute("aria-hidden", "true");
   viewerBody.innerHTML = "";
@@ -468,8 +446,8 @@ form.addEventListener("submit", async (event) => {
   gateError.textContent = "";
   const allowed = await isValidPassword(passwordInput.value);
   if (!allowed) {
-    gateError.textContent = "密码错误，请重新输入。";
     passwordInput.select();
+    window.alert("你没有被邀请\nYou are not invited");
     return;
   }
   unlock();
